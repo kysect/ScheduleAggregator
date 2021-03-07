@@ -18,6 +18,17 @@ namespace ScheduleAggregator.DataModels.Services
         }
         public Guid Create(Guid subjectID, LessonType lessonType, Guid groupID, Guid teacherID, Guid roomID, TimeSlot timeSlot, DaySlot daySlot, WeekType weekType)
         {
+            var LessonsInThisTime = _uof.Lessons.Get(_ => _.DaySlot == daySlot && _.TimeSlot == timeSlot);
+
+            if (LessonsInThisTime.Where(_ => _.Room.Id == roomID).Any())
+                throw new Exception("There is already lesson in this room");
+
+            if (LessonsInThisTime.Where(_ => _.Teacher.Id == teacherID).Any())
+                throw new Exception("This teacher already has lesson in this time");
+
+            if (LessonsInThisTime.Where(_ => _.Group.Id == groupID).Any())
+                throw new Exception("This group already has lesson in this time");
+
             var Out = new Lesson() {
                 Subject = _uof.SemesterSubjects.FindById(subjectID),
                 LessonType = lessonType,
@@ -36,6 +47,10 @@ namespace ScheduleAggregator.DataModels.Services
         {
             var teacher = _uof.Teachers.FindById(teacherID);
             var lesson = _uof.Lessons.FindById(lessonID);
+
+            if(teacher.Lessons.Where(_ => _.DaySlot == lesson.DaySlot && _.TimeSlot == lesson.TimeSlot).Any())
+                throw new Exception("This teacher already has lesson in this time");
+
             if (!teacher.Lessons.Exists(_ => _.Id == lesson.Id))
             {
                 teacher.Lessons.Add(lesson);

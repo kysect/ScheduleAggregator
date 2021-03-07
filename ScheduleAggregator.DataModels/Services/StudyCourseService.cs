@@ -27,6 +27,8 @@ namespace ScheduleAggregator.DataModels.Services
         public void AddGroup(Guid courseID, Guid groupID)
         {
             var course = _uof.StudyCourses.FindById(courseID);
+            if (_uof.StudyCourses.Get(_ => _.Groups.Exists(_ => _.Id == groupID)).Any())
+                throw new Exception("This group is already in the other course");
             if (!course.Groups.Exists(_ => _.Id == groupID))
             {
                 course.Groups.Add(_uof.StudyGroups.FindById(groupID));
